@@ -25,11 +25,11 @@ public:
     }
 
     inline double &operator()(size_t x, size_t y) {
-        return elems[y * w + x];
+        return elems[x * w + y];
     }
 
     inline double operator()(size_t x, size_t y) const {
-        return elems[y * w + x];
+        return elems[x * w + y];
     }
 
     inline size_t height() const {
