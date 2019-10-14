@@ -23,6 +23,6 @@ struct ConductivityAttributes {
 
 std::string strip(const std::string &str);
 
-ConductivityAttributes *getArgs(const std::string &filename);
+ConductivityAttributes getArgs(const std::string &filename);
 
 #endif //LAB3_CONF_ATTRIBUTES_H

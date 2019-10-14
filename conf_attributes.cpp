@@ -8,22 +8,22 @@ std::string strip(const std::string &str) {
     if (st == std::string::npos || en == std::string::npos) {
         throw std::invalid_argument("Invalid number of double quotes in params");
     }
-    return str.substr(st + 1, st - en - 2);
+    return str.substr(st + 1, en - st - 1);
 }
 
-ConductivityAttributes *getArgs(const std::string &filename) {
-    auto *attributes = new ConductivityAttributes;
+ConductivityAttributes getArgs(const std::string &filename) {
+    auto attributes = ConductivityAttributes{};
     bool until_params = true;
-    std::map<std::string, double *> conf_attributes{{"density",       &attributes->density},
-                                                    {"heat_capacity", &attributes->heat_capacity},
-                                                    {"conductivity",  &attributes->conductivity},
-                                                    {"height",        &attributes->height},
-                                                    {"width",         &attributes->width},
-                                                    {"delta_x",       &attributes->delta_x},
-                                                    {"delta_y",       &attributes->delta_y},
-                                                    {"delta_t",       &attributes->delta_t},
-                                                    {"picture_t",     &attributes->picture_t},
-                                                    {"iteration_max", &attributes->iteration_max}};
+    std::map<std::string, double *> conf_attributes{{"density",       &attributes.density},
+                                                    {"heat_capacity", &attributes.heat_capacity},
+                                                    {"conductivity",  &attributes.conductivity},
+                                                    {"height",        &attributes.height},
+                                                    {"width",         &attributes.width},
+                                                    {"delta_x",       &attributes.delta_x},
+                                                    {"delta_y",       &attributes.delta_y},
+                                                    {"delta_t",       &attributes.delta_t},
+                                                    {"picture_t",     &attributes.picture_t},
+                                                    {"iteration_max", &attributes.iteration_max}};
 
     std::ifstream f(filename);
     std::string line;
@@ -51,7 +51,7 @@ ConductivityAttributes *getArgs(const std::string &filename) {
         } else {
             std::string name = line.substr(0, half);
             std::string value = line.substr(half + 1);
-            attributes->params[name] = strip(value);
+            attributes.params[name] = strip(value);
         }
     }
     return attributes;
