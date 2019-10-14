@@ -1,0 +1,12 @@
+density = 10.5
+heat_capacity = 250
+conductivity = 100
+height = 20
+width = 20
+delta_x = 1
+delta_y = 1
+delta_t = 1.0
+iteration_max = 3
+picture_t = 1
+PARAMS
+input_file ="../heat_map.txt"
