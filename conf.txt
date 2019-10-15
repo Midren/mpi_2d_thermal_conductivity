@@ -9,3 +9,4 @@ delta_t = 1.0
 iteration_max = 3
 picture_t = 1
 input_file="../heat_map.txt"
+output_files_dir="../images"

@@ -16,9 +16,10 @@ struct ConductivityAttributes {
     double delta_x;
     double delta_y;
     double delta_t;
-    double picture_t;
-    double iteration_max;
+    size_t picture_t;
+    size_t iteration_max;
     std::string input_file;
+    std::string output_files_dir;
 };
 
 ConductivityAttributes getArgs(const std::string &filename);

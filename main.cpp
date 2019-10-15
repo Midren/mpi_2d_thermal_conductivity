@@ -8,6 +8,8 @@
 
 void read_initial_data(multiArray &T, const std::string &path) {
     std::ifstream fin(path);
+    if (!fin.is_open())
+        throw std::invalid_argument("Invalid path to file with initial data");
     size_t num = 0;
     while (fin >> T.data()[num++]);
 }
@@ -37,16 +39,17 @@ int main(int argc, char *argv[]) {
     boost::mpi::communicator world;
     auto args = getArgs("../conf.txt");
     if (!check_neumann_criteria(args)) {
-        std::cerr << "Doesn't fulfill Neumann criteria" << std::endl;
-        exit(1);
+        throw std::invalid_argument("Arguments doesn't fulfill Neumann criteria");
     }
     auto T = multiArray(args.height, args.width);
     read_initial_data(T, args.input_file);
-    update_conductivity(args, T);
-    if (world.rank() == 0) {
-        std::cout << "Master" << std::endl;
-    } else {
-        std::cout << "Slave" << std::endl;
+    for (size_t i = 0; i < args.iteration_max; i++) {
+        update_conductivity(args, T);
+        if (world.rank() == 0) {
+            std::cout << "Master" << std::endl;
+        } else {
+            std::cout << "Slave" << std::endl;
+        }
     }
 
     for (int i = 0; i < T.height(); i++) {

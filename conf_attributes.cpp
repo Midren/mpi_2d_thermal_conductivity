@@ -1,5 +1,4 @@
 #include "conf_attributes.h"
-#include <iostream>
 #include <variant>
 
 
@@ -26,20 +25,23 @@ ConductivityAttributes getArgs(const std::string &filename) {
                                                            {"conductivity",  &attributes.conductivity},
                                                            {"delta_x",       &attributes.delta_x},
                                                            {"delta_y",       &attributes.delta_y},
-                                                           {"delta_t",       &attributes.delta_t},
+                                                           {"delta_t",       &attributes.delta_t}};
+
+    std::map<std::string, size_t *> size_t_conf_attributes{{"height",        &attributes.height},
+                                                           {"width",         &attributes.width},
                                                            {"picture_t",     &attributes.picture_t},
                                                            {"iteration_max", &attributes.iteration_max}};
 
-    std::map<std::string, size_t *> size_t_conf_attributes{{"height", &attributes.height},
-                                                           {"width",  &attributes.width}};
-
-    std::map<std::string, std::string *> string_conf_attributes{{"input_file", &attributes.input_file}};
+    std::map<std::string, std::string *> string_conf_attributes{{"input_file", &attributes.input_file},
+                                                                {"output_files_dir", &attributes.output_files_dir}};
 
     std::vector<std::variant<
             decltype(double_conf_attributes),
             decltype(size_t_conf_attributes),
-            decltype(string_conf_attributes)>> confs{double_conf_attributes, size_t_conf_attributes,
-                                                     string_conf_attributes};
+            decltype(string_conf_attributes)>> confs{
+            double_conf_attributes, size_t_conf_attributes,
+            string_conf_attributes
+    };
 
     std::ifstream f(filename);
     std::string line;
