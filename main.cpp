@@ -25,8 +25,8 @@ void update_conductivity(ConductivityAttributes &args, multiArray &arr) {
     for (size_t i = 1; i < arr.width() - 1; i++) {
         for (size_t j = 1; j < arr.height() - 1; j++) {
             arr(i, j) = old_arr(i, j) + args.delta_t * alpha * (
-                    (arr(i - 1, j) - 2 * arr(i, j) + arr(i + 1, j)) / (args.delta_x * args.delta_x) +
-                    (arr(i, j - 1) - 2 * arr(i, j) + arr(i, j + 1)) / (args.delta_y * args.delta_y)
+                    (old_arr(i - 1, j) - 2 * old_arr(i, j) + old_arr(i + 1, j)) / (args.delta_x * args.delta_x) +
+                    (old_arr(i, j - 1) - 2 * old_arr(i, j) + old_arr(i, j + 1)) / (args.delta_y * args.delta_y)
             );
         }
     }
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
 
     for (int i = 0; i < T.height(); i++) {
         for (int j = 0; j < T.width(); j++) {
-            std::cout << T(i, j) << " ";
+            std::cout << T(i, j) << "\t";
         }
         std::cout << std::endl;
     }
