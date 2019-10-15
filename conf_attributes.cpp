@@ -43,8 +43,7 @@ ConductivityAttributes getArgs(const std::string &filename) {
 
     std::ifstream f(filename);
     std::string line;
-    while (
-            getline(f, line)) {
+    while (getline(f, line)) {
         if (line[0] == '#' || line.empty()) {
             continue;
         }

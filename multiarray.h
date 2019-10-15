@@ -13,8 +13,17 @@ public:
         ::operator delete(elems);
     }
 
+    multiArray(const multiArray &arr) : h(arr.h), w(arr.w) {
+        elems = static_cast<double *>(::operator new(arr.h * arr.w * sizeof(double)));
+        memcpy(elems, arr.elems, arr.h * arr.w * sizeof(double));
+    }
+
     multiArray &operator=(const multiArray &arr) {
-        this->elems = arr.elems;
+        if (h * w < arr.h * arr.w) {
+            ::operator delete(elems);
+            elems = static_cast<double *>(::operator new(arr.h * arr.w * sizeof(double)));
+        }
+        memcpy(elems, arr.elems, arr.h * arr.w * sizeof(double));
         return *this;
     }
 
@@ -24,12 +33,19 @@ public:
         return *this;
     }
 
+    bool swap(multiArray &arr) {
+        if (arr.h != h || arr.w != w)
+            return true;
+        std::swap(elems, arr.elems);
+        return false;
+    }
+
     inline double &operator()(size_t x, size_t y) {
-        return elems[x * w + y];
+        return elems[y * w + x];
     }
 
     inline double operator()(size_t x, size_t y) const {
-        return elems[x * w + y];
+        return elems[y * w + x];
     }
 
     inline size_t height() const {
