@@ -8,20 +8,18 @@
 #include <fstream>
 
 struct ConductivityAttributes {
-    std::map<std::string, std::string> params;
+    size_t height;
+    size_t width;
     double density;
     double heat_capacity;
     double conductivity;
-    double height;
-    double width;
     double delta_x;
     double delta_y;
     double delta_t;
     double picture_t;
     double iteration_max;
+    std::string input_file;
 };
-
-std::string strip(const std::string &str);
 
 ConductivityAttributes getArgs(const std::string &filename);
 
