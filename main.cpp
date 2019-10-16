@@ -10,6 +10,7 @@
 #include <boost/mpi.hpp>
 #include "gnuplot-iostream.h"
 
+#include "concurrent_queue.h"
 #include "conf_attributes.h"
 #include "multiarray.h"
 
@@ -43,14 +44,34 @@ void update_conductivity(const ConductivityAttributes &args, multiArray &arr) {
 }
 
 std::pair<size_t, size_t> range_calc(const size_t &world_size, const size_t &current_proc, const size_t &height) {
-    if (current_proc == 0) {
-        return {0, height - 1};
-    }
     size_t start_calc = std::ceil((height / (world_size - 1.0)) * (current_proc - 1));
     size_t end_calc = std::ceil((height / (world_size - 1.0)) * (current_proc));
     start_calc = start_calc == 0 ? 0 : start_calc - 1;
     end_calc = end_calc >= height ? height - 1 : end_calc;
     return {start_calc, end_calc};
+}
+
+void gatherImages(ConcurrentQueue<multiArray> &concurrentQueue, ConductivityAttributes &args,
+                  boost::mpi::communicator &world) {
+    std::vector<size_t> szs;
+    for (int i = 1; i < world.size(); i++) {
+        auto[a, b] = range_calc(world.size(), i, args.height);
+        size_t sz = (b - a + 1) * args.width +
+                    (a == 0 ? 0 : -args.width) +
+                    (b == args.height - 1 ? 0 : -args.width);
+        szs.push_back(sz);
+    }
+
+    for (auto i = 0; i < args.iteration_max; i += args.picture_t) {
+        auto multiArr = multiArray(args.height, args.width);
+        size_t sum_size = 0;
+        for (auto r = 1; r < world.size(); r++) {
+            world.recv(r, 0, multiArr.data() + sum_size, szs[r - 1]);
+            sum_size += szs[r - 1];
+        }
+        concurrentQueue.push(multiArr);
+    }
+    concurrentQueue.push(multiArray(0, 0));
 }
 
 int main(int argc, char *argv[]) {
@@ -62,31 +83,22 @@ int main(int argc, char *argv[]) {
     if (!check_neumann_criteria(args)) {
         throw std::invalid_argument("Arguments doesn't fulfill Neumann criteria");
     }
-    auto[from, to] = range_calc(world.size(), world.rank(), args.height);
-    auto T = multiArray(to - from + 1, args.width);
-    read_initial_data(T, args.input_file, from, T.height() * T.width());
 
     if (world.rank() == 0) {
-        std::vector<size_t> szs;
-        for (int i = 1; i < world.size(); i++) {
-            auto[a, b] = range_calc(world.size(), i, args.height);
-            size_t sz = (b - a + 1) * args.width +
-                        (a == 0 ? 0 : -args.width) +
-                        (b == args.height - 1 ? 0 : -args.width);
-            szs.push_back(sz);
-        }
-
-        for (auto i = 0; i < args.iteration_max; i += args.picture_t) {
-            size_t sum_size = 0;
-            for (auto r = 1; r < world.size(); r++) {
-                world.recv(r, 0, T.data() + sum_size, szs[r - 1]);
-                sum_size += szs[r - 1];
-            }
-
+        ConcurrentQueue<multiArray> concurrentQueue{};
+        auto t = std::thread(gatherImages, std::ref(concurrentQueue), std::ref(args), std::ref(world));
+        while (true) {
+            auto T = concurrentQueue.pop();
+            if (T.height() == 0)
+                break;
             T.print();
-            std::cout << std::endl;
         }
+        t.join();
     } else {
+        auto[from, to] = range_calc(world.size(), world.rank(), args.height);
+        auto T = multiArray(to - from + 1, args.width);
+        read_initial_data(T, args.input_file, from, T.height() * T.width());
+
         auto *from_row = new double[T.width()];
         auto *to_row = new double[T.width()];
 
@@ -112,15 +124,5 @@ int main(int argc, char *argv[]) {
         delete[] from_row;
         delete[] to_row;
     }
-    Gnuplot gp;
-    gp << "unset key\n";
-    gp << "set pm3d\n";
-    gp << "set hidden3d\n";
-    gp << "set view map\n";
-    gp << "set xrange [ -0.500000 : 3.50000 ] \n";
-    gp << "set yrange [ -0.500000 : 3.50000 ] \n";
-    gp << "splot '-'\n";
-    gp.send2d(T.to_2d());
-    gp.flush();
     return 0;
 }
