@@ -5,6 +5,7 @@
 #include <utility>
 #include <thread>
 #include <mutex>
+#include <queue>
 
 #include <boost/mpi.hpp>
 #include "gnuplot-iostream.h"
@@ -65,38 +66,53 @@ int main(int argc, char *argv[]) {
     auto[from, to] = range_calc(world.size(), world.rank(), args.height);
     auto T = multiArray(to - from + 1, args.width);
     read_initial_data(T, args.input_file, from, T.height() * T.width());
-//
-//    if (world.rank() == 0) {
-//        std::mutex m;
-//    } else {
-//        auto *from_row = new double[T.width()];
-//        auto *to_row = new double[T.width()];
-//
-//        for (auto i = 0; i < args.iteration_max; i++) {
-//            update_conductivity(args, T);
-//            if (w_rank != 1) {
-//                world.send(w_rank - 1, 0, T.get_row(0), T.width());
-//                world.recv(w_rank - 1, 0, from_row, T.width());
-//                T.set_row(0, from_row);
-//            }
-//            if (w_rank != (w_size - 1)) {
-//                world.send(w_rank + 1, 0, T.get_row(T.height() - 1), T.width());
-//                world.recv(w_rank + 1, 0, to_row, T.width());
-//                T.set_row(T.height() - 1, to_row);
-//            }
-//        }
-//        delete[] from_row;
-//        delete[] to_row;
-//    }
-//
-    if (world.rank() == 1) {
-        std::cout << T.height() << " " << T.width() << std::endl;
-        for (int j = 0; j < T.height(); j++) {
-            for (int i = 0; i < T.width(); i++) {
-                std::cout << T[i][j] << "\t";
+
+    if (world.rank() == 0) {
+        std::vector<size_t> szs;
+        for (int i = 1; i < world.size(); i++) {
+            auto[a, b] = range_calc(world.size(), i, args.height);
+            size_t sz = (b - a + 1) * args.width +
+                        (a == 0 ? 0 : -args.width) +
+                        (b == args.height - 1 ? 0 : -args.width);
+            szs.push_back(sz);
+        }
+
+        for (auto i = 0; i < args.iteration_max; i += args.picture_t) {
+            size_t sum_size = 0;
+            for (auto r = 1; r < world.size(); r++) {
+                world.recv(r, 0, T.data() + sum_size, szs[r - 1]);
+                sum_size += szs[r - 1];
             }
+
+            T.print();
             std::cout << std::endl;
         }
+    } else {
+        auto *from_row = new double[T.width()];
+        auto *to_row = new double[T.width()];
+
+        for (auto i = 0; i < args.iteration_max; i++) {
+            update_conductivity(args, T);
+            if (w_rank != 1) {
+                world.send(w_rank - 1, 0, T.get_row(0), T.width());
+                world.recv(w_rank - 1, 0, from_row, T.width());
+                T.set_row(0, from_row);
+            }
+            if (w_rank != (w_size - 1)) {
+                world.send(w_rank + 1, 0, T.get_row(T.height() - 1), T.width());
+                world.recv(w_rank + 1, 0, to_row, T.width());
+                T.set_row(T.height() - 1, to_row);
+            }
+            if (i % args.picture_t == 0) {
+                size_t sz = T.height() * T.width() +
+                            (w_rank == world.size() - 1 ? 0 : -T.width()) +
+                            (w_rank == 1 ? 0 : -T.width());
+                world.send(0, 0, T.data() + (w_rank == 1 ? 0 : T.width()), sz);
+            }
+        }
+        delete[] from_row;
+        delete[] to_row;
     }
+
     return 0;
 }

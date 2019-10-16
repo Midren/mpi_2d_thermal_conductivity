@@ -4,7 +4,6 @@
 
 class multiArray {
 public:
-
     explicit multiArray(size_t height, size_t width) : h(height), w(width) {
         elems = static_cast<double *>(::operator new(height * width * sizeof(double)));
     }
@@ -33,6 +32,15 @@ public:
         return *this;
     }
 
+    void print() {
+        for (int j = 0; j < h; j++) {
+            for (int i = 0; i < w; i++) {
+                std::cout << this->operator()(i, j) << " ";
+            }
+            std::cout << std::endl;
+        }
+    }
+
     bool swap(multiArray &arr) {
         if (arr.h != h || arr.w != w)
             return true;
@@ -54,21 +62,6 @@ public:
 
     inline double operator()(size_t x, size_t y) const {
         return elems[y * w + x];
-    }
-
-    inline auto operator[](size_t x) {
-        struct _ {
-            _(size_t x, size_t w, double *elems) : w(w), x(x), elems(elems) {}
-
-            double &operator[](size_t y) {
-                return elems[y * w + x];
-            }
-
-            size_t w;
-            size_t x;
-            double *elems;
-        } result(x, w, elems);
-        return result;
     }
 
     inline size_t height() const {
