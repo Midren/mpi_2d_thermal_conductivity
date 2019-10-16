@@ -44,7 +44,7 @@ public:
         memcpy(elems + row_height * w, array, w * sizeof(double));
     }
 
-    double* get_row(const size_t &row_height) {
+    double *get_row(const size_t &row_height) {
         return elems + row_height * w;
     }
 
@@ -54,6 +54,21 @@ public:
 
     inline double operator()(size_t x, size_t y) const {
         return elems[y * w + x];
+    }
+
+    inline auto operator[](size_t x) {
+        struct _ {
+            _(size_t x, size_t w, double *elems) : w(w), x(x), elems(elems) {}
+
+            double &operator[](size_t y) {
+                return elems[y * w + x];
+            }
+
+            size_t w;
+            size_t x;
+            double *elems;
+        } result(x, w, elems);
+        return result;
     }
 
     inline size_t height() const {

@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cmath>
 #include <utility>
+#include <thread>
+#include <mutex>
 
 #include <boost/mpi.hpp>
 #include "gnuplot-iostream.h"
@@ -63,35 +65,35 @@ int main(int argc, char *argv[]) {
     auto[from, to] = range_calc(world.size(), world.rank(), args.height);
     auto T = multiArray(to - from + 1, args.width);
     read_initial_data(T, args.input_file, from, T.height() * T.width());
-
-    if (world.rank() == 0) {
-
-    } else {
-        auto *from_row = new double[T.width()];
-        auto *to_row = new double[T.width()];
-
-        for (auto i = 0; i < args.iteration_max; i++) {
-            update_conductivity(args, T);
-            if (w_rank != 1) {
-                world.send(w_rank - 1, 0, T.get_row(0), T.width());
-                world.recv(w_rank - 1, 0, from_row, T.width());
-                T.set_row(0, from_row);
-            }
-            if (w_rank != (w_size - 1)) {
-                world.send(w_rank + 1, 0, T.get_row(T.height() - 1), T.width());
-                world.recv(w_rank + 1, 0, to_row, T.width());
-                T.set_row(T.height() - 1, to_row);
-            }
-        }
-        delete[] from_row;
-        delete[] to_row;
-    }
-
+//
+//    if (world.rank() == 0) {
+//        std::mutex m;
+//    } else {
+//        auto *from_row = new double[T.width()];
+//        auto *to_row = new double[T.width()];
+//
+//        for (auto i = 0; i < args.iteration_max; i++) {
+//            update_conductivity(args, T);
+//            if (w_rank != 1) {
+//                world.send(w_rank - 1, 0, T.get_row(0), T.width());
+//                world.recv(w_rank - 1, 0, from_row, T.width());
+//                T.set_row(0, from_row);
+//            }
+//            if (w_rank != (w_size - 1)) {
+//                world.send(w_rank + 1, 0, T.get_row(T.height() - 1), T.width());
+//                world.recv(w_rank + 1, 0, to_row, T.width());
+//                T.set_row(T.height() - 1, to_row);
+//            }
+//        }
+//        delete[] from_row;
+//        delete[] to_row;
+//    }
+//
     if (world.rank() == 1) {
         std::cout << T.height() << " " << T.width() << std::endl;
         for (int j = 0; j < T.height(); j++) {
             for (int i = 0; i < T.width(); i++) {
-                std::cout << T(i, j) << "\t";
+                std::cout << T[i][j] << "\t";
             }
             std::cout << std::endl;
         }
