@@ -57,7 +57,6 @@ int main(int argc, char *argv[]) {
     boost::mpi::communicator world;
     int w_rank = world.rank();
     int w_size = world.size();
-
     auto args = getArgs("../conf.txt");
     if (!check_neumann_criteria(args)) {
         throw std::invalid_argument("Arguments doesn't fulfill Neumann criteria");
@@ -65,30 +64,29 @@ int main(int argc, char *argv[]) {
     auto[from, to] = range_calc(world.size(), world.rank(), args.height);
     auto T = multiArray(to - from + 1, args.width);
     read_initial_data(T, args.input_file, from, T.height() * T.width());
-//
-//    if (world.rank() == 0) {
-//        std::mutex m;
-//    } else {
-//        auto *from_row = new double[T.width()];
-//        auto *to_row = new double[T.width()];
-//
-//        for (auto i = 0; i < args.iteration_max; i++) {
-//            update_conductivity(args, T);
-//            if (w_rank != 1) {
-//                world.send(w_rank - 1, 0, T.get_row(0), T.width());
-//                world.recv(w_rank - 1, 0, from_row, T.width());
-//                T.set_row(0, from_row);
-//            }
-//            if (w_rank != (w_size - 1)) {
-//                world.send(w_rank + 1, 0, T.get_row(T.height() - 1), T.width());
-//                world.recv(w_rank + 1, 0, to_row, T.width());
-//                T.set_row(T.height() - 1, to_row);
-//            }
-//        }
-//        delete[] from_row;
-//        delete[] to_row;
-//    }
-//
+
+    if (world.rank() == 0) {
+        std::mutex m;
+    } else {
+        auto *from_row = new double[T.width()];
+        auto *to_row = new double[T.width()];
+
+        for (auto i = 0; i < args.iteration_max; i++) {
+            update_conductivity(args, T);
+            if (w_rank != 1) {
+                world.isend(w_rank - 1, 0, T.get_row(0), T.width());
+                world.irecv(w_rank - 1, 0, from_row, T.width());
+                T.set_row(0, from_row);
+            }
+            if (w_rank != (w_size - 1)) {
+                world.isend(w_rank + 1, 0, T.get_row(T.height() - 1), T.width());
+                world.irecv(w_rank + 1, 0, to_row, T.width());
+                T.set_row(T.height() - 1, to_row);
+            }
+        }
+        delete[] from_row;
+        delete[] to_row;
+    }
     if (world.rank() == 1) {
         std::cout << T.height() << " " << T.width() << std::endl;
         for (int j = 0; j < T.height(); j++) {
@@ -98,5 +96,15 @@ int main(int argc, char *argv[]) {
             std::cout << std::endl;
         }
     }
+    Gnuplot gp;
+    gp << "unset key\n";
+    gp << "set pm3d\n";
+    gp << "set hidden3d\n";
+    gp << "set view map\n";
+    gp << "set xrange [ -0.500000 : 3.50000 ] \n";
+    gp << "set yrange [ -0.500000 : 3.50000 ] \n";
+    gp << "splot '-'\n";
+    gp.send2d(T.to_2d());
+    gp.flush();
     return 0;
 }
