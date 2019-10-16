@@ -32,12 +32,12 @@ public:
         return *this;
     }
 
-    void print() {
+    void print(std::string path) {
+        std::ofstream fout(path);
         for (int j = 0; j < h; j++) {
-            for (int i = 0; i < w; i++) {
-                std::cout << this->operator()(i, j) << " ";
-            }
-            std::cout << std::endl;
+            for (int i = 0; i < w; i++)
+                fout << j << " " << i << " " << this->operator()(i, j) << "\n";
+            fout << std::endl;
         }
     }
 
@@ -76,12 +76,12 @@ public:
         return elems;
     }
 
-    std::vector<std::vector<double >> to_2d(){
+    std::vector<std::vector<double >> to_2d() {
         std::vector<std::vector<double >> rows;
-        for(int i = 0; i < h; i++) {
-            double* tmp = get_row(i);
-            std::vector<double > row;
-            for(int j = 0; j < w; j++){
+        for (int i = 0; i < h; i++) {
+            double *tmp = get_row(i);
+            std::vector<double> row;
+            for (int j = 0; j < w; j++) {
                 row.push_back(tmp[i]);
             }
             rows.push_back(row);

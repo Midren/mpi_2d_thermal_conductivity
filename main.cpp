@@ -86,14 +86,15 @@ int main(int argc, char *argv[]) {
 
     if (world.rank() == 0) {
         ConcurrentQueue<multiArray> concurrentQueue{};
-        auto t = std::thread(gatherImages, std::ref(concurrentQueue), std::ref(args), std::ref(world));
+        auto thread = std::thread(gatherImages, std::ref(concurrentQueue), std::ref(args), std::ref(world));
+        size_t cnt = 0;
         while (true) {
             auto T = concurrentQueue.pop();
             if (T.height() == 0)
                 break;
-            T.print();
+            T.print(args.output_files_dir + "/image_" + std::to_string(cnt++) + ".txt");
         }
-        t.join();
+        thread.join();
     } else {
         auto[from, to] = range_calc(world.size(), world.rank(), args.height);
         auto T = multiArray(to - from + 1, args.width);
