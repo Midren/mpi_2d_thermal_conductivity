@@ -76,6 +76,19 @@ public:
         return elems;
     }
 
+    std::vector<std::vector<double >> to_2d(){
+        std::vector<std::vector<double >> rows;
+        for(int i = 0; i < h; i++) {
+            double* tmp = get_row(i);
+            std::vector<double > row;
+            for(int j = 0; j < w; j++){
+                row.push_back(tmp[i]);
+            }
+            rows.push_back(row);
+        }
+        return rows;
+    }
+
 private:
     double *elems;
     size_t h;

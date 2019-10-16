@@ -58,7 +58,6 @@ int main(int argc, char *argv[]) {
     boost::mpi::communicator world;
     int w_rank = world.rank();
     int w_size = world.size();
-
     auto args = getArgs("../conf.txt");
     if (!check_neumann_criteria(args)) {
         throw std::invalid_argument("Arguments doesn't fulfill Neumann criteria");
@@ -113,6 +112,15 @@ int main(int argc, char *argv[]) {
         delete[] from_row;
         delete[] to_row;
     }
-
+    Gnuplot gp;
+    gp << "unset key\n";
+    gp << "set pm3d\n";
+    gp << "set hidden3d\n";
+    gp << "set view map\n";
+    gp << "set xrange [ -0.500000 : 3.50000 ] \n";
+    gp << "set yrange [ -0.500000 : 3.50000 ] \n";
+    gp << "splot '-'\n";
+    gp.send2d(T.to_2d());
+    gp.flush();
     return 0;
 }
