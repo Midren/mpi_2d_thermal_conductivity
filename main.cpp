@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <algorithm>
+#include <cmath>
 
 #include "conf_attributes.h"
 #include "multiarray.h"
@@ -16,7 +17,7 @@ void read_initial_data(multiArray &T, const std::string &path) {
 
 bool check_neumann_criteria(ConductivityAttributes &args) {
     auto alpha = args.conductivity / (args.density * args.heat_capacity);
-    return args.delta_t <= std::max(args.delta_x, args.delta_y) / (4 * alpha);
+    return args.delta_t <= (std::pow(std::max(args.delta_x, args.delta_y), 2) / (4 * alpha));
 }
 
 void update_conductivity(ConductivityAttributes &args, multiArray &arr) {
