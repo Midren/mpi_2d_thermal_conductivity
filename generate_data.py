@@ -11,7 +11,7 @@ with open("heat_map.txt", "w") as f:
     for i in range(h):
         for j in range(w):
             if i == 0 or i == w - 1 or j == 0 or j == h - 1:
-                f.write("100" + (" " if j != w - 1 else ""))
+                f.write("10000000000" + (" " if j != w - 1 else ""))
             else:
                 f.write("0 ")
         f.write("\n")

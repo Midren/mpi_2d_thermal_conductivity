@@ -79,10 +79,16 @@ int main(int argc, char *argv[]) {
     boost::mpi::communicator world;
     int w_rank = world.rank();
     int w_size = world.size();
-    if(w_size <= 2) {
+    if (w_size <= 2) {
         throw std::invalid_argument("Too small amount of processes");
     }
-    auto args = getArgs("../conf.txt");
+    std::string config_path;
+    if (argc < 2) {
+        config_path = "conf.txt";
+    } else {
+        config_path = argv[1];
+    }
+    auto args = getArgs(config_path);
     if (!check_neumann_criteria(args)) {
         throw std::invalid_argument("Arguments doesn't fulfill Neumann criteria");
     }
