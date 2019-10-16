@@ -20,13 +20,30 @@ bool check_neumann_criteria(ConductivityAttributes &args) {
     return args.delta_t <= (std::pow(std::max(args.delta_x, args.delta_y), 2) / (4 * alpha));
 }
 
-void update_conductivity(ConductivityAttributes &args, multiArray &arr) {
+void update_conductivity(const ConductivityAttributes &args, multiArray &arr, const size_t &from, const size_t &to,
+                         boost::mpi::communicator &world) {
+    //send recv updt
+    double *from_row;
+    double *to_row;
+    size_t w_rank = world.rank();
+    size_t w_size = world.size();
+    if(w_rank != 1) {
+        world.send(w_rank - 1, 0, arr.get_row(from + 1), arr.width());
+        world.recv(w_rank - 1, 0, from_row, arr.width());
+        arr.set_row(from, from_row);
+    }
+    if(w_rank != (w_size - 1)) {
+        world.send(w_rank + 1, 0, arr.get_row(to - 1), arr.width());
+        world.recv(w_rank + 1, 0, to_row, arr.width());
+        arr.set_row(to, to_row);
+    }
+
     auto alpha = args.conductivity / (args.density * args.heat_capacity);
     static multiArray old_arr = arr;
     arr.swap(old_arr);
 
     for (size_t i = 1; i < arr.width() - 1; i++) {
-        for (size_t j = 1; j < arr.height() - 1; j++) {
+        for (size_t j = from + 1; j < to - 1; j++) {
             arr(i, j) = old_arr(i, j) + args.delta_t * alpha * (
                     (old_arr(i - 1, j) - 2 * old_arr(i, j) + old_arr(i + 1, j)) / (args.delta_x * args.delta_x) +
                     (old_arr(i, j - 1) - 2 * old_arr(i, j) + old_arr(i, j + 1)) / (args.delta_y * args.delta_y)
@@ -35,7 +52,7 @@ void update_conductivity(ConductivityAttributes &args, multiArray &arr) {
     }
 }
 
-std::pair<size_t, size_t> range_calc(const size_t &world_size, const size_t &current_proc, const size_t &height) {
+std::pair<size_t, size_t> range_calc(const size_t &world_size, const size_t &current_proc, const size_t &height ){
     size_t start_calc = std::ceil((height / (world_size - 1.0)) * (current_proc - 1));
     size_t end_calc = std::ceil((height / (world_size - 1.0)) * (current_proc));
     start_calc = start_calc == 0 ? 0 : start_calc - 1;

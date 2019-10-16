@@ -40,7 +40,7 @@ public:
         return false;
     }
 
-    void replace_row(const size_t &row_height, const double *array) {
+    void set_row(const size_t &row_height, const double *array) {
         memcpy(elems + row_height * w, array, w * sizeof(double));
     }
 
