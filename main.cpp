@@ -1,9 +1,12 @@
-#include <boost/mpi.hpp>
 #include <iostream>
 #include <fstream>
 #include <algorithm>
 #include <cmath>
 #include <utility>
+
+#include <boost/mpi.hpp>
+#include "gnuplot-iostream.h"
+
 #include "conf_attributes.h"
 #include "multiarray.h"
 
