@@ -40,6 +40,14 @@ public:
         return false;
     }
 
+    void replace_row(const size_t &row_height, const double *array) {
+        memcpy(elems + row_height * w, array, w * sizeof(double));
+    }
+
+    double* get_row(const size_t &row_height) {
+        return elems + row_height * w;
+    }
+
     inline double &operator()(size_t x, size_t y) {
         return elems[y * w + x];
     }

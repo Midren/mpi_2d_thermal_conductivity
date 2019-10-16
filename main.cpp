@@ -3,7 +3,7 @@
 #include <fstream>
 #include <algorithm>
 #include <cmath>
-
+#include <utility>
 #include "conf_attributes.h"
 #include "multiarray.h"
 
@@ -35,6 +35,14 @@ void update_conductivity(ConductivityAttributes &args, multiArray &arr) {
     }
 }
 
+std::pair<int, int> range_calc(const int &world_size, const int &current_proc, const int &height) {
+    int start_calc = ((height / (world_size - 1)) * (current_proc - 1));
+    int end_calc = ((height / (world_size - 1)) * (current_proc));
+    start_calc = start_calc + (start_calc == 0 ? 0 : -1);
+    end_calc = (end_calc >= height ? height : end_calc - 1);
+    return std::make_pair(start_calc, end_calc);
+}
+
 int main(int argc, char *argv[]) {
     boost::mpi::environment env{argc, argv};
     boost::mpi::communicator world;
@@ -44,20 +52,23 @@ int main(int argc, char *argv[]) {
     }
     auto T = multiArray(args.height, args.width);
     read_initial_data(T, args.input_file);
-    for (size_t i = 0; i < args.iteration_max; i++) {
-        update_conductivity(args, T);
-        if (world.rank() == 0) {
-            std::cout << "Master" << std::endl;
-        } else {
-            std::cout << "Slave" << std::endl;
-        }
-    }
-
-    for (int i = 0; i < T.height(); i++) {
-        for (int j = 0; j < T.width(); j++) {
-            std::cout << T(i, j) << "\t";
-        }
-        std::cout << std::endl;
-    }
+    std::cout << "-----------\n" << std::endl;
+    std::cout << args.height << "\n" << std::endl;
+    std::pair<int, int> test_pair = range_calc(world.size(), world.rank(), args.height);
+    std::cout << test_pair.first << " | "<< test_pair.second << std::endl;
+//    for (size_t i = 0; i < args.iteration_max; i++) {
+//        update_conductivity(args, T);
+//        if (world.rank() == 0) {
+//            std::cout << "Master" << std::endl;
+//        } else {
+//            std::cout << "Slave" << std::endl;
+//        }
+//    }
+//    for (int i = 0; i < T.height(); i++) {
+//        for (int j = 0; j < T.width(); j++) {
+//            std::cout << T(i, j) << "\t";
+//        }
+//        std::cout << std::endl;
+//    }
     return 0;
 }
