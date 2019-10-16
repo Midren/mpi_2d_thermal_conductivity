@@ -106,12 +106,12 @@ int main(int argc, char *argv[]) {
         for (auto i = 0; i < args.iteration_max; i++) {
             update_conductivity(args, T);
             if (w_rank != 1) {
-                world.send(w_rank - 1, 0, T.get_row(0), T.width());
+                world.isend(w_rank - 1, 0, T.get_row(0), T.width());
                 world.recv(w_rank - 1, 0, from_row, T.width());
                 T.set_row(0, from_row);
             }
             if (w_rank != (w_size - 1)) {
-                world.send(w_rank + 1, 0, T.get_row(T.height() - 1), T.width());
+                world.isend(w_rank + 1, 0, T.get_row(T.height() - 1), T.width());
                 world.recv(w_rank + 1, 0, to_row, T.width());
                 T.set_row(T.height() - 1, to_row);
             }
@@ -119,7 +119,7 @@ int main(int argc, char *argv[]) {
                 size_t sz = T.height() * T.width() +
                             (w_rank == world.size() - 1 ? 0 : -T.width()) +
                             (w_rank == 1 ? 0 : -T.width());
-                world.send(0, 0, T.data() + (w_rank == 1 ? 0 : T.width()), sz);
+                world.isend(0, 0, T.data() + (w_rank == 1 ? 0 : T.width()), sz);
             }
         }
         delete[] from_row;
