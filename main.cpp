@@ -35,12 +35,12 @@ void update_conductivity(ConductivityAttributes &args, multiArray &arr) {
     }
 }
 
-std::pair<int, int> range_calc(const int &world_size, const int &current_proc, const int &height) {
-    int start_calc = ((height / (world_size - 1)) * (current_proc - 1));
-    int end_calc = ((height / (world_size - 1)) * (current_proc));
-    start_calc = start_calc + (start_calc == 0 ? 0 : -1);
-    end_calc = (end_calc >= height ? height : end_calc - 1);
-    return std::make_pair(start_calc, end_calc);
+std::pair<size_t, size_t> range_calc(const size_t &world_size, const size_t &current_proc, const size_t &height) {
+    size_t start_calc = std::ceil((height / (world_size - 1.0)) * (current_proc - 1));
+    size_t end_calc = std::ceil((height / (world_size - 1.0)) * (current_proc));
+    start_calc = start_calc == 0 ? 0 : start_calc - 1;
+    end_calc = end_calc >= height ? height : end_calc;
+    return {start_calc, end_calc};
 }
 
 int main(int argc, char *argv[]) {
@@ -52,17 +52,17 @@ int main(int argc, char *argv[]) {
     }
     auto T = multiArray(args.height, args.width);
     read_initial_data(T, args.input_file);
-    std::cout << "-----------\n" << std::endl;
-    std::cout << args.height << "\n" << std::endl;
-    std::pair<int, int> test_pair = range_calc(world.size(), world.rank(), args.height);
-    std::cout << test_pair.first << " | "<< test_pair.second << std::endl;
 //    for (size_t i = 0; i < args.iteration_max; i++) {
 //        update_conductivity(args, T);
-//        if (world.rank() == 0) {
-//            std::cout << "Master" << std::endl;
-//        } else {
-//            std::cout << "Slave" << std::endl;
-//        }
+    if (world.rank() == 0) {
+//        std::cout << "Master" << std::endl;
+    } else {
+//        std::cout << "Slave" << std::endl;
+        auto test_pair = range_calc(world.size(), world.rank(), args.height);
+        std::cout << "-----------\n" << std::endl
+                  << args.height << "\n" << std::endl
+                  << test_pair.first << " | " << test_pair.second << std::endl;
+    }
 //    }
 //    for (int i = 0; i < T.height(); i++) {
 //        for (int j = 0; j < T.width(); j++) {

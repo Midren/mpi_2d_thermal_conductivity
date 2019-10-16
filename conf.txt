@@ -1,8 +1,8 @@
 density = 10.5
 heat_capacity = 250
 conductivity = 100
-height = 20
-width = 20
+height = 23
+width = 23
 delta_x = 1
 delta_y = 1
 delta_t = 1.0
