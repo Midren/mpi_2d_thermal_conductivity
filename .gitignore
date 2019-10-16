@@ -2,4 +2,6 @@
 cmake-*
 heat_map.txt
 CMakeLists.txt
-images/*
+images/*.txt
+images/*.png
+images/*.gif
