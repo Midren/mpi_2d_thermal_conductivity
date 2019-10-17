@@ -36,7 +36,7 @@ public:
         std::ofstream fout(path);
         for (int j = 0; j < h; j++) {
             for (int i = 0; i < w; i++)
-                fout << j << " " << i << " " << this->operator()(i, j) << "\n";
+                fout << j << " " << i << " " << this->operator()(i, j) << std::endl;
             fout << std::endl;
         }
     }

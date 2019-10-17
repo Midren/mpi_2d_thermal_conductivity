@@ -112,19 +112,19 @@ int main(int argc, char *argv[]) {
         auto *from_row = new double[T.width()];
         auto *to_row = new double[T.width()];
 
-        for (auto i = 0; i < args.iteration_max; i++) {
+        for (auto it = 0; it < args.iteration_max; it++) {
             update_conductivity(args, T);
             if (w_rank != 1) {
-                world.isend(w_rank - 1, 0, T.get_row(0), T.width());
+                world.isend(w_rank - 1, 0, T.get_row(1), T.width());
                 world.recv(w_rank - 1, 0, from_row, T.width());
                 T.set_row(0, from_row);
             }
             if (w_rank != (w_size - 1)) {
-                world.isend(w_rank + 1, 0, T.get_row(T.height() - 1), T.width());
+                world.isend(w_rank + 1, 0, T.get_row(T.height() - 2), T.width());
                 world.recv(w_rank + 1, 0, to_row, T.width());
                 T.set_row(T.height() - 1, to_row);
             }
-            if (i % args.picture_t == 0) {
+            if (it % args.picture_t == 0) {
                 size_t sz = T.height() * T.width() +
                             (w_rank == world.size() - 1 ? 0 : -T.width()) +
                             (w_rank == 1 ? 0 : -T.width());

@@ -14,11 +14,10 @@ def dir_loop():
             create_png_from_txt(file, "a.pl", file.replace(".txt", ".png"))
 
 def create_gif():
-    images = []
-    for file in os.listdir("./"):
-        if file.endswith(".png"):
-            images.append(imageio.imread(file))
-    imageio.mimsave("mygif.gif", images)
+    images = list(filter(lambda x: x.endswith(".png"), os.listdir("./")))
+    images.sort(key=lambda x: int(x.split("_")[1].split(".")[0]))
+    images = map(lambda x: imageio.imread(x), images)
+    imageio.mimsave("mygif.gif", images, duration=0.025, subrectangles=True)
 
-dir_loop()
+#dir_loop()
 create_gif()
